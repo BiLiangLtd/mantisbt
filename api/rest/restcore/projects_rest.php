@@ -27,7 +27,40 @@ $g_app->group('/projects', function() use ( $g_app ) {
 	$g_app->get( '/', 'rest_projects_get' );
 	$g_app->get( '/{id}', 'rest_projects_get' );
 	$g_app->get( '/{id}/', 'rest_projects_get' );
+
+    $g_app->post( '/', 'rest_projects_create' );
+    $g_app->post( '', 'rest_projects_create' );
 });
+
+
+/**
+ * Create project
+ * @param \Slim\Http\Request $p_request
+ * @param \Slim\Http\Response $p_response
+ * @param array $p_args
+ */
+function rest_projects_create( \Slim\Http\Request $p_request, \Slim\Http\Response $p_response, array $p_args ){
+
+    $t_payload = $p_request->getParsedBody();
+    if( $t_payload === null ) {
+        return $p_response->withStatus( HTTP_STATUS_BAD_REQUEST, "Unable to parse body, specify content type" );
+    }
+
+    $t_data = array( 'payload' => $t_payload );
+    $t_command = new ProjectCreateCommand( $t_data );
+    $t_result = $t_command->execute();
+    $t_prj_id = $t_result['id'];
+
+
+    $t_user_id = auth_get_current_user_id();
+    $t_lang = mci_get_user_lang( $t_user_id );
+
+    $t_prj_obj = mci_project_get( $t_prj_id ,$t_lang, /* detail */ true );
+
+    return $p_response->withStatus( HTTP_STATUS_CREATED, "User created with id $t_prj_id" )->
+    withJson( array( 'project' => $t_prj_obj ) );
+
+}
 
 /**
  * A method to get list of projects accessible to user with all their related information.
