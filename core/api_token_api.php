@@ -230,3 +230,13 @@ function api_token_revoke( $p_api_token_id, $p_user_id ) {
 	db_query( $t_query, array( $p_api_token_id, $p_user_id ) );
 }
 
+/**
+ * Revokes the api token with the token name and user id
+ * @param string $p_api_token_name  The API token name
+ * @param integer $p_user_id    The user id
+ */
+function api_token_revoke_by_token_name($p_api_token_name, $p_user_id ){
+    db_param_push();
+    $t_query = 'DELETE FROM {api_token} WHERE name=' . db_param() . ' AND user_id = ' . db_param();
+    db_query( $t_query, array( $p_api_token_name, $p_user_id ) );
+}
