@@ -147,6 +147,11 @@ function rest_issue_add( \Slim\Http\Request $p_request, \Slim\Http\Response $p_r
 	}
 
 	$t_data = array( 'payload' => array( 'issue' => $t_issue ) );
+
+    if (isset( $t_issue['clone_info'] )){
+        $t_data["options"] = array('clone_info' => $t_issue['clone_info']);
+    }
+
 	$t_command = new IssueAddCommand( $t_data );
 	$t_result = $t_command->execute();
 	$t_issue_id = (int)$t_result['issue_id'];
