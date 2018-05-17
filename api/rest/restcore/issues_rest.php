@@ -433,6 +433,32 @@ function rest_issue_update( \Slim\Http\Request $p_request, \Slim\Http\Response $
 		return $p_response->withStatus( HTTP_STATUS_BAD_REQUEST, 'Issue id mismatch' );
 	}
 
+
+	# update the custom_fields.
+	if (isset($t_issue_patch["custom_fields"]) and is_array($t_issue_patch["custom_fields"]) and (count($t_issue_patch["custom_fields"]) > 0)){
+	    $t_custom_update = array();
+        foreach ($t_issue_patch["custom_fields"] as $t_custom_item){
+            $t_custom_update[$t_custom_item["field"]["name"]] = $t_custom_item["value"];
+        }
+
+        foreach($t_issue["custom_fields"] as $t_old_item){
+            $t_cur_field_name = $t_old_item["field"]["name"];
+            if (in_array($t_cur_field_name, $t_custom_update)){
+                $t_old_item["value"] = $t_custom_update[$t_cur_field_name];
+                unset($t_custom_update[$t_cur_field_name]);
+            }
+        }
+
+        foreach ($t_custom_update as $t_custom_key => $t_custom_value){
+            $t_issue["custom_fields"][] = array(
+                "field"=> array("name"=> $t_custom_key),
+                "value"=> $t_custom_value
+            );
+        }
+
+        unset($t_issue_patch["custom_fields"]);
+    }
+
 	$t_issue = (object)array_merge( $t_issue, $t_issue_patch );
 
 	# Trigger the issue update
