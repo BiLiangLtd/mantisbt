@@ -32,7 +32,8 @@ $g_app->group('/filters', function() use ( $g_app ) {
 	$g_app->get( '/', 'rest_filter_get' );
 	$g_app->get( '/{id}', 'rest_filter_get' );
 	$g_app->get( '/{id}/', 'rest_filter_get' );
-	$g_app->delete( '/{id}', 'rest_filter_delete' );
+
+    $g_app->delete( '/{id}', 'rest_filter_delete' );
 	$g_app->delete( '/{id}/', 'rest_filter_delete' );
 });
 

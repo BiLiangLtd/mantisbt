@@ -27,7 +27,9 @@ use Mantis\Exceptions\ClientException;
 $g_app->group('/issues', function() use ( $g_app ) {
 	$g_app->get( '', 'rest_issue_get' );
 	$g_app->get( '/', 'rest_issue_get' );
-	$g_app->get( '/{id}', 'rest_issue_get' );
+    $g_app->get( '/search', 'rest_issue_search' );
+
+    $g_app->get( '/{id}', 'rest_issue_get' );
 	$g_app->get( '/{id}/', 'rest_issue_get' );
 	$g_app->post( '', 'rest_issue_add' );
 	$g_app->post( '/', 'rest_issue_add' );
@@ -40,7 +42,9 @@ $g_app->group('/issues', function() use ( $g_app ) {
 	$g_app->patch( '/{id}', 'rest_issue_update' );
 	$g_app->patch( '/{id}/', 'rest_issue_update' );
 
-	# Tags
+
+
+    # Tags
 	$g_app->post( '/{id}/tags', 'rest_issue_tag_attach' );
 	$g_app->post( '/{id}/tags/', 'rest_issue_tag_attach' );
 	$g_app->delete( '/{id}/tags/{tag_id}', 'rest_issue_tag_detach' );
@@ -70,6 +74,60 @@ $g_app->group('/issues', function() use ( $g_app ) {
 	$g_app->get( '/{id}/files/{file_id}/', 'rest_issue_files_get' );
 	$g_app->get( '/{id}/files/{file_id}', 'rest_issue_files_get' );
 });
+
+/**
+ * A method that user any conditions to handler search issue via REST API.
+ * @Note: Currently only support self and issue status filtering.
+ *
+ * @param \Slim\Http\Request $p_request   The request.
+ * @param \Slim\Http\Response $p_response The response.
+ * @param array $p_args Arguments
+ * @return \Slim\Http\Response The augmented response.
+ */
+function rest_issue_search( \Slim\Http\Request $p_request, \Slim\Http\Response $p_response, array $p_args ){
+
+    $t_status = isset( $p_args['status'] ) ? $p_args['status'] : $p_request->getParam( 'status' );
+    $t_project_id = isset( $p_args['project_id'] ) ? $p_args['project_id'] : $p_request->getParam( 'project_id' );
+
+    $t_user_id = auth_get_current_user_id();
+
+    // @TODO
+    // 1. This is need validate user rule.
+    // 2. Verify the validity of the parameters.
+
+
+
+    $t_filter = filter_get_default();
+    $t_filter[FILTER_PROPERTY_HANDLER_ID] = array( '0' => $t_user_id );
+    if ( !is_blank($t_project_id) )
+        $t_filter[FILTER_PROPERTY_PROJECT_ID] = array( '0' => $t_project_id );
+
+    if ( !is_blank($t_status) )
+        if ( !is_numeric($t_status)){
+            $t_status = mci_get_status_id( array("name"=>$t_status) );
+        }
+        $t_filter[FILTER_PROPERTY_STATUS] = array( '0' => $t_status );
+
+    $t_page_number = $p_request->getParam( 'page', 1 );
+    $t_page_size = $p_request->getParam( 'page_size', 50 );
+
+    $t_rows = filter_get_bug_rows( $t_page_number, $t_page_size, $t_page_count,
+        $t_bug_count, $t_filter );
+
+    $t_lang = mci_get_user_lang( $t_user_id );
+
+    $t_issues = array();
+    foreach( $t_rows as $t_issue_data ) {
+        $t_issues[] = mci_issue_data_as_array( $t_issue_data, $t_user_id, $t_lang );
+    }
+    $t_result = array( 'issues' => $t_issues, "page_count"=> $t_page_count, "issue_count" => $t_bug_count);
+
+
+    return  $p_response->withStatus( HTTP_STATUS_SUCCESS )->withJson( $t_result );
+}
+
+
+
 
 /**
  * A method that does the work to handle getting an issue via REST API.
