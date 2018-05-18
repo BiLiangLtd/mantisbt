@@ -414,7 +414,10 @@ function rest_issue_update( \Slim\Http\Request $p_request, \Slim\Http\Response $
 		return $p_response->withStatus( HTTP_STATUS_BAD_REQUEST, $t_message );
 	}
 
-	$t_issue = mc_issue_get( /* username */ '', /* password */ '', $t_issue_id );
+    $is_return_obj = $p_request->getParam( 'is_return_obj',True );
+
+
+    $t_issue = mc_issue_get( /* username */ '', /* password */ '', $t_issue_id );
 	ApiObjectFactory::throwIfFault( $t_issue );
 
 	$t_etag = mc_issue_hash( $t_issue_id, array( 'issues' => array( $t_issue ) ) );
@@ -465,8 +468,13 @@ function rest_issue_update( \Slim\Http\Request $p_request, \Slim\Http\Response $
 	$t_result = mc_issue_update( /* username */ '', /* password */ '', $t_issue_id, $t_issue );
 	ApiObjectFactory::throwIfFault( $t_result );
 
-	$t_updated_issue = mc_issue_get( /* username */ '', /* password */ '', $t_issue_id );
-	$t_result = array( 'issues' => array( $t_updated_issue ) );
+    $t_result = array( 'result' => True);
+	if ($is_return_obj) {
+        $t_updated_issue = mc_issue_get( /* username */
+            '', /* password */
+            '', $t_issue_id);
+        $t_result['issues'] = array($t_updated_issue);
+    }
 
 	return $p_response->withStatus( HTTP_STATUS_SUCCESS, "Issue with id $t_issue_id Updated" )
 		->withHeader( HEADER_ETAG, mc_issue_hash( $t_issue_id, $t_result ) )
